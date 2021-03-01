@@ -19,7 +19,7 @@
     </style>
 </head>
 <body>
-    <ul class="uk-subnav uk-subnav-pill uk-margin-remove" uk-switcher>
+    <ul class="uk-subnav uk-subnav-divider uk-margin-remove" uk-switcher>
         <li><a>Expanse 101</a></li>
         <li><a>Comet 101</a></li>
         <li><a>Notebook 101</a></li>
@@ -32,12 +32,14 @@
         <li><iframe src="https://okumura6883.gitbook.io/comet-101/"></iframe></li>
         <li><iframe src="https://st.yuu.dev/"></iframe></li>
         <li>
-            <div>
-                <button id="prev">Prev</button>
-                <label id="page-num"></label>/<label id="page-count"></label>
-                <button id="next">Next</button>
+            <div class="uk-margin uk-text-center">
+                <button id="prev" class="uk-button uk-button-default">Prev</button>
+                <label id="page-num"></label> / <label id="page-count"></label>
+                <button id="next" class="uk-button uk-button-default">Next</button>
             </div>
-            <div><canvas id="canvas"></canvas></div>
+            <div class="uk-text-center">
+                <canvas id="canvas"></canvas>
+            </div>
         </li>
     </ul>
     <script>
@@ -60,7 +62,7 @@
             pageRendering = true;
             // Using promise to fetch the page
             pdfDoc.getPage(num).then(page => {
-                const viewport = page.getViewport({ scale: 2 });
+                const viewport = page.getViewport({ scale: 1.5 });
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
