@@ -9,6 +9,7 @@
     <!-- UIkit JS -->
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.6.16/dist/js/uikit.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.6.16/dist/js/uikit-icons.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.min.js"></script>
     <title>Main Page</title>
     <style>
         iframe {
@@ -23,12 +24,115 @@
         <li><a>Comet 101</a></li>
         <li><a>Notebook 101</a></li>
         <li><a>Skill Tree</a></li>
+        <li><a>PDF</a></li>
     </ul>
     <ul class="uk-switcher uk-width-1-1">
         <li><iframe src="https://expanse-101.yuu.dev/"></iframe></li>
         <li><iframe src="https://okumura6883.gitbook.io/notebook-101/"></iframe></li>
         <li><iframe src="https://okumura6883.gitbook.io/comet-101/"></iframe></li>
         <li><iframe src="https://st.yuu.dev/"></iframe></li>
+        <li>
+            <div>
+                <button id="prev">Prev</button>
+                <label id="page-num"></label>/<label id="page-count"></label>
+                <button id="next">Next</button>
+            </div>
+            <div><canvas id="canvas"></canvas></div>
+        </li>
     </ul>
+    <script>
+        // If absolute URL from the remote server is provided, configure the CORS
+        // header on that server.
+        const url = "https://raw.githubusercontent.com/sdsc-hpc-training-org/expanse-101/main/Webinar-Running-Jobs-on-Expanse-10-08-2020.pdf";
+
+        let pdfDoc = null,
+            pageNum = 1,
+            pageRendering = false,
+            pageNumPending = null,
+            canvas = document.getElementById('canvas'),
+            ctx = canvas.getContext('2d');
+
+        /**
+         * Get page info from document, resize canvas accordingly, and render page.
+         * @param num Page number.
+         */
+        const renderPage = num => {
+            pageRendering = true;
+            // Using promise to fetch the page
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 2 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // Render PDF page into canvas context
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                // Wait for rendering to finish
+                renderTask.promise.then(() => {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        // New page rendering is pending
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+
+            // Update page counters
+            document.getElementById('page-num').textContent = num;
+        }
+
+        /**
+         * If another page rendering in progress, waits until the rendering is
+         * finised. Otherwise, executes rendering immediately.
+         */
+        const queueRenderPage = num => {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        /**
+         * Displays previous page.
+         */
+        const onPrevPage = () => {
+            if (pageNum <= 1) {
+                return;
+            }
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+
+        document.getElementById('prev').addEventListener('click', onPrevPage);
+
+        /**
+         * Displays next page.
+         */
+        const onNextPage = () => {
+            if (pageNum >= pdfDoc.numPages) {
+                return;
+            }
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+
+        document.getElementById('next').addEventListener('click', onNextPage);
+
+        /**
+         * Asynchronously downloads PDF.
+         */
+        pdfjsLib.getDocument(url).promise.then(doc => {
+            pdfDoc = doc;
+            document.getElementById('page-count').textContent = pdfDoc.numPages;
+            // Initial/first page rendering
+            renderPage(pageNum);
+        });
+    </script>
 </body>
 </html>
